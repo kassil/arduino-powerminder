@@ -113,6 +113,89 @@ void test_remaining_tenths()
                 "remaining_tenths handles millis wraparound");
 }
 
+void expect_command(console_logic::CommandId actual,
+                    console_logic::CommandId expected,
+                    const char *msg)
+{
+    expect_true(actual == expected, msg);
+}
+
+void test_command_decode_and_parse_line()
+{
+    {
+        char line[] = "  help  ";
+        const console_logic::ParsedLine parsed = console_logic::parse_line(line);
+        expect_command(parsed.id, console_logic::CommandId::Help,
+                       "parse_line decodes HELP");
+        expect_streq(parsed.cmd, "HELP", "parse_line uppercases command token");
+        expect_streq(parsed.arg, nullptr, "parse_line keeps null arg when missing");
+    }
+
+    {
+        char line[] = "id";
+        const console_logic::ParsedLine parsed = console_logic::parse_line(line);
+        expect_command(parsed.id, console_logic::CommandId::Version,
+                       "parse_line decodes ID as VERSION alias");
+    }
+
+    {
+        char line[] = "?";
+        const console_logic::ParsedLine parsed = console_logic::parse_line(line);
+        expect_command(parsed.id, console_logic::CommandId::Help,
+                       "parse_line decodes ? as HELP alias");
+    }
+
+    {
+        char line[] = "reset 40";
+        const console_logic::ParsedLine parsed = console_logic::parse_line(line);
+        expect_command(parsed.id, console_logic::CommandId::Reset,
+                       "parse_line decodes RESET");
+        expect_streq(parsed.arg, "40", "parse_line extracts RESET arg");
+    }
+
+    {
+        char line[] = "bogus";
+        const console_logic::ParsedLine parsed = console_logic::parse_line(line);
+        expect_command(parsed.id, console_logic::CommandId::Unknown,
+                       "parse_line marks unknown commands");
+        expect_streq(parsed.cmd, "BOGUS", "parse_line still normalizes unknown command");
+    }
+
+    {
+        char line[] = " \t  ";
+        const console_logic::ParsedLine parsed = console_logic::parse_line(line);
+        expect_command(parsed.id, console_logic::CommandId::Empty,
+                       "parse_line marks whitespace-only input empty");
+        expect_streq(parsed.cmd, nullptr, "parse_line keeps cmd null on empty input");
+    }
+}
+
+void test_argument_policy_helpers()
+{
+    uint16_t out = 0;
+
+    expect_true(console_logic::resolve_reset_tenths(nullptr, 25U, &out),
+                "resolve_reset_tenths accepts missing arg");
+    expect_true(out == 25U, "resolve_reset_tenths uses default when missing arg");
+
+    expect_true(console_logic::resolve_reset_tenths("123", 25U, &out),
+                "resolve_reset_tenths parses explicit arg");
+    expect_true(out == 123U, "resolve_reset_tenths writes parsed explicit arg");
+
+    expect_false(console_logic::resolve_reset_tenths("12x", 25U, &out),
+                 "resolve_reset_tenths rejects malformed explicit arg");
+
+    expect_false(console_logic::resolve_setdelay_tenths(nullptr, &out),
+                 "resolve_setdelay_tenths requires argument");
+
+    expect_true(console_logic::resolve_setdelay_tenths("456", &out),
+                "resolve_setdelay_tenths parses valid argument");
+    expect_true(out == 456U, "resolve_setdelay_tenths writes parsed value");
+
+    expect_false(console_logic::resolve_setdelay_tenths("-1", &out),
+                 "resolve_setdelay_tenths rejects malformed argument");
+}
+
 } // namespace
 
 int main()
@@ -121,6 +204,8 @@ int main()
     test_split_cmd_arg();
     test_str_upper();
     test_remaining_tenths();
+    test_command_decode_and_parse_line();
+    test_argument_policy_helpers();
 
     if (g_failures != 0) {
         std::cerr << g_failures << " test(s) failed\n";

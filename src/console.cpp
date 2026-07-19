@@ -6,7 +6,6 @@
 
 #include <Arduino.h>
 #include <avr/wdt.h>
-#include <string.h>
 
 namespace {
 
@@ -74,12 +73,10 @@ void cmd_off()
 // ON or OFF cancels it.
 void cmd_reset(const char *arg)
 {
-    uint16_t tenths = config_reset_tenths();
-    if (arg != nullptr) {
-        if (!console_logic::parse_u16(arg, &tenths)) {
-            Serial.println(F("? RESET delay must be a decimal number 0..65535 tenths"));
-            return;
-        }
+    uint16_t tenths;
+    if (!console_logic::resolve_reset_tenths(arg, config_reset_tenths(), &tenths)) {
+        Serial.println(F("? RESET delay must be a decimal number 0..65535 tenths"));
+        return;
     }
 
     relay_off();
@@ -102,7 +99,7 @@ void cmd_reset(const char *arg)
 void cmd_setdelay(const char *arg)
 {
     uint16_t tenths;
-    if (!console_logic::parse_u16(arg, &tenths)) {
+    if (!console_logic::resolve_setdelay_tenths(arg, &tenths)) {
         Serial.println(F("? SETDELAY needs a decimal number 0..65535 tenths"));
         return;
     }
@@ -146,33 +143,33 @@ void cmd_reboot()
 
 void dispatch(char *line)
 {
-    char *cmd;
-    char *arg;
-    console_logic::split_cmd_arg(line, &cmd, &arg);
-    if (cmd == nullptr) {
+    const console_logic::ParsedLine parsed = console_logic::parse_line(line);
+    if (parsed.id == console_logic::CommandId::Empty) {
         return; // whitespace-only line
     }
-    console_logic::str_upper(cmd);
 
-    if (strcmp_P(cmd, PSTR("HELP")) == 0 || strcmp_P(cmd, PSTR("?")) == 0) {
+    // Command text was already decoded once in parse_line(); branching on the
+    // enum id here is cheap (if/switch both compile to simple integer control flow).
+
+    if (parsed.id == console_logic::CommandId::Help) {
         cmd_help();
-    } else if (strcmp_P(cmd, PSTR("ON")) == 0) {
+    } else if (parsed.id == console_logic::CommandId::On) {
         cmd_on();
-    } else if (strcmp_P(cmd, PSTR("OFF")) == 0) {
+    } else if (parsed.id == console_logic::CommandId::Off) {
         cmd_off();
-    } else if (strcmp_P(cmd, PSTR("RESET")) == 0) {
-        cmd_reset(arg);
-    } else if (strcmp_P(cmd, PSTR("SETDELAY")) == 0) {
-        cmd_setdelay(arg);
-    } else if (strcmp_P(cmd, PSTR("STATUS")) == 0) {
+    } else if (parsed.id == console_logic::CommandId::Reset) {
+        cmd_reset(parsed.arg);
+    } else if (parsed.id == console_logic::CommandId::SetDelay) {
+        cmd_setdelay(parsed.arg);
+    } else if (parsed.id == console_logic::CommandId::Status) {
         cmd_status();
-    } else if (strcmp_P(cmd, PSTR("VERSION")) == 0 || strcmp_P(cmd, PSTR("ID")) == 0) {
+    } else if (parsed.id == console_logic::CommandId::Version) {
         cmd_version();
-    } else if (strcmp_P(cmd, PSTR("REBOOT")) == 0) {
+    } else if (parsed.id == console_logic::CommandId::Reboot) {
         cmd_reboot();
     } else {
         Serial.print(F("? unknown command: "));
-        Serial.println(cmd);
+        Serial.println(parsed.cmd);
         Serial.println(F("type HELP for the command list"));
     }
 }
