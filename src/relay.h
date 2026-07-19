@@ -16,6 +16,9 @@ constexpr uint8_t RELAY_PIN = 7;
 // to false for an active-high board without touching any call sites.
 constexpr bool RELAY_ACTIVE_LOW = true;
 
+// Built-in LED: HIGH is on, LOW is off.
+constexpr bool BUILTIN_LED_ACTIVE_LOW = false;
+
 // Configure the relay pin as an output and power the load ON.
 //
 // Startup guarantee: relay_init() drives the ON level before enabling output,

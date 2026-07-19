@@ -10,8 +10,10 @@ bool s_load_on = false;
 // board polarity, and remember the new state.
 void drive(bool on)
 {
-    const uint8_t level = (on ^ RELAY_ACTIVE_LOW) ? HIGH : LOW;
-    digitalWrite(RELAY_PIN, level);
+    const uint8_t relay_level = (on ^ RELAY_ACTIVE_LOW) ? HIGH : LOW;
+    digitalWrite(RELAY_PIN, relay_level);
+    const uint8_t led_level = (on ^ BUILTIN_LED_ACTIVE_LOW) ? HIGH : LOW;
+    digitalWrite(LED_BUILTIN, led_level); // mirror the load state on the built-in LED
     s_load_on = on;
 }
 
@@ -23,6 +25,7 @@ void relay_init()
     // glitch through the OFF state as it becomes a driven output.
     drive(true);
     pinMode(RELAY_PIN, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT);
     drive(true);
 }
 
