@@ -188,9 +188,12 @@ void cmd_status()
     Serial.println(relay_is_on() ? F("ON") : F("OFF"));
     print_reset_default();
     if (s_reset_active) {
-        const int32_t remaining_ms = static_cast<int32_t>(s_reset_end_ms - millis());
+        // Avoid signed divide; saves 56 bytes of flash on Uno.  The signed difference tolerates millis() wraparound.
+        const uint32_t now = millis();
         const uint16_t remaining_tenths =
-            remaining_ms > 0 ? static_cast<uint16_t>(remaining_ms / 100) : 0;
+            static_cast<int32_t>(now - s_reset_end_ms) < 0
+                ? static_cast<uint16_t>((s_reset_end_ms - now) / 100UL)
+                : 0;
         Serial.print(F("reset=in-progress, "));
         Serial.print(remaining_tenths);
         Serial.println(F(" tenths left"));
