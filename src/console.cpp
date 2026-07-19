@@ -69,17 +69,18 @@ void print_reset_default()
 
 void cmd_help()
 {
-    Serial.println(F("Commands:"));
-    Serial.println(F("  HELP            Show this help"));
-    Serial.println(F("  ON              Power the load ON"));
-    Serial.println(F("  OFF             Power the load OFF"));
-    Serial.println(F("  RESET [tenths]  Power-cycle: OFF for [tenths] of a"));
-    Serial.println(F("                  second (default if omitted), then ON."));
-    Serial.println(F("                  ON or OFF cancels a RESET in progress"));
-    Serial.println(F("  SETDELAY tenths Set+save the default RESET duration"));
-    Serial.println(F("  STATUS          Show load state and settings"));
-    Serial.println(F("  VERSION         Show firmware name and version"));
-    Serial.println(F("  REBOOT          Restart the controller"));
+    Serial.println(F(
+        "Commands:\r\n"
+        "  HELP            Show this help\r\n"
+        "  ON              Power the load ON\r\n"
+        "  OFF             Power the load OFF\r\n"
+        "  RESET [tenths]  Power-cycle: OFF for [tenths] of a\r\n"
+        "                  second (default if omitted), then ON.\r\n"
+        "                  ON or OFF cancels a RESET in progress\r\n"
+        "  SETDELAY tenths Set+save the default RESET duration\r\n"
+        "  STATUS          Show load state and settings\r\n"
+        "  VERSION         Show firmware name and version\r\n"
+        "  REBOOT          Restart the controller"));
 }
 
 void cmd_on()
@@ -215,9 +216,10 @@ void console_init()
     while (!Serial) {
         // wait for the serial port to be ready (no-op on classic Uno)
     }
-    Serial.println();
-    Serial.println(F(FW_NAME " v" FW_VERSION " ready"));
-    Serial.println(F("type HELP for the command list"));
+    Serial.println(F(
+        "\r\n"
+        FW_NAME " v" FW_VERSION " ready\r\n"
+        "type HELP for the command list"));
     print_prompt();
 }
 
