@@ -37,6 +37,47 @@ void str_upper(char *s)
     }
 }
 
+bool is_space_tab(char c)
+{
+    return c == ' ' || c == '\t';
+}
+
+void split_cmd_arg(char *line, char **cmd_out, char **arg_out)
+{
+    *cmd_out = nullptr;
+    *arg_out = nullptr;
+
+    char *p = line;
+    while (is_space_tab(*p)) {
+        ++p;
+    }
+    if (*p == '\0') {
+        return;
+    }
+
+    *cmd_out = p;
+    while (*p != '\0' && !is_space_tab(*p)) {
+        ++p;
+    }
+    if (*p == '\0') {
+        return;
+    }
+
+    *p++ = '\0';
+    while (is_space_tab(*p)) {
+        ++p;
+    }
+    if (*p == '\0') {
+        return;
+    }
+
+    *arg_out = p;
+    while (*p != '\0' && !is_space_tab(*p)) {
+        ++p;
+    }
+    *p = '\0';
+}
+
 // Parse a decimal unsigned 16-bit value.  Returns false on empty input, any
 // non-digit character, or overflow (e.g. "65535fish" or "65536").
 bool parse_u16(const char *s, uint16_t *out)
@@ -176,11 +217,12 @@ void cmd_reboot()
 
 void dispatch(char *line)
 {
-    char *cmd = strtok(line, " \t");
+    char *cmd;
+    char *arg;
+    split_cmd_arg(line, &cmd, &arg);
     if (cmd == nullptr) {
         return; // whitespace-only line
     }
-    char *arg = strtok(nullptr, " \t");
     str_upper(cmd);
 
     if (strcmp_P(cmd, PSTR("HELP")) == 0 || strcmp_P(cmd, PSTR("?")) == 0) {
