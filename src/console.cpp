@@ -2,6 +2,7 @@
 #include "relay.h"
 #include "config.h"
 #include "version.h"
+#include "console_logic_internal.h"
 
 #include <Arduino.h>
 #include <avr/wdt.h>
@@ -26,77 +27,6 @@ uint32_t s_reset_end_ms = 0;
 void print_prompt()
 {
     Serial.print(F("> "));
-}
-
-void str_upper(char *s)
-{
-    for (; *s; ++s) {
-        if (*s >= 'a' && *s <= 'z') {
-            *s = static_cast<char>(*s - ('a' - 'A'));
-        }
-    }
-}
-
-bool is_space_tab(char c)
-{
-    return c == ' ' || c == '\t';
-}
-
-void split_cmd_arg(char *line, char **cmd_out, char **arg_out)
-{
-    *cmd_out = nullptr;
-    *arg_out = nullptr;
-
-    char *p = line;
-    while (is_space_tab(*p)) {
-        ++p;
-    }
-    if (*p == '\0') {
-        return;
-    }
-
-    *cmd_out = p;
-    while (*p != '\0' && !is_space_tab(*p)) {
-        ++p;
-    }
-    if (*p == '\0') {
-        return;
-    }
-
-    *p++ = '\0';
-    while (is_space_tab(*p)) {
-        ++p;
-    }
-    if (*p == '\0') {
-        return;
-    }
-
-    *arg_out = p;
-    while (*p != '\0' && !is_space_tab(*p)) {
-        ++p;
-    }
-    *p = '\0';
-}
-
-// Parse a decimal unsigned 16-bit value.  Returns false on empty input, any
-// non-digit character, or overflow (e.g. "65535fish" or "65536").
-bool parse_u16(const char *s, uint16_t *out)
-{
-    if (s == nullptr || *s == '\0') {
-        return false;
-    }
-    uint32_t v = 0;
-    for (; *s; ++s) {
-        if (*s < '0' || *s > '9') {
-            return false;
-        }
-        v = v * 10 + static_cast<uint8_t>(*s - '0');
-        if (v > 0xFFFFUL) {
-            return false;
-        }
-    }
-    *out = static_cast<uint16_t>(v);
-    return true;
 }
 
 void print_reset_default()
@@ -146,7 +76,7 @@ void cmd_reset(const char *arg)
 {
     uint16_t tenths = config_reset_tenths();
     if (arg != nullptr) {
-        if (!parse_u16(arg, &tenths)) {
+        if (!console_logic::parse_u16(arg, &tenths)) {
             Serial.println(F("? RESET delay must be a decimal number 0..65535 tenths"));
             return;
         }
@@ -172,7 +102,7 @@ void cmd_reset(const char *arg)
 void cmd_setdelay(const char *arg)
 {
     uint16_t tenths;
-    if (!parse_u16(arg, &tenths)) {
+    if (!console_logic::parse_u16(arg, &tenths)) {
         Serial.println(F("? SETDELAY needs a decimal number 0..65535 tenths"));
         return;
     }
@@ -188,12 +118,8 @@ void cmd_status()
     Serial.println(relay_is_on() ? F("ON") : F("OFF"));
     print_reset_default();
     if (s_reset_active) {
-        // Avoid signed divide; saves 56 bytes of flash on Uno.  The signed difference tolerates millis() wraparound.
-        const uint32_t now = millis();
         const uint16_t remaining_tenths =
-            static_cast<int32_t>(now - s_reset_end_ms) < 0
-                ? static_cast<uint16_t>((s_reset_end_ms - now) / 100UL)
-                : 0;
+            console_logic::remaining_tenths(millis(), s_reset_end_ms);
         Serial.print(F("reset=in-progress, "));
         Serial.print(remaining_tenths);
         Serial.println(F(" tenths left"));
@@ -222,11 +148,11 @@ void dispatch(char *line)
 {
     char *cmd;
     char *arg;
-    split_cmd_arg(line, &cmd, &arg);
+    console_logic::split_cmd_arg(line, &cmd, &arg);
     if (cmd == nullptr) {
         return; // whitespace-only line
     }
-    str_upper(cmd);
+    console_logic::str_upper(cmd);
 
     if (strcmp_P(cmd, PSTR("HELP")) == 0 || strcmp_P(cmd, PSTR("?")) == 0) {
         cmd_help();

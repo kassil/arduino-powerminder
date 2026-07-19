@@ -17,6 +17,9 @@ constexpr uint8_t RELAY_PIN = 7;
 constexpr bool RELAY_ACTIVE_LOW = true;
 
 // Configure the relay pin as an output and power the load ON.
+//
+// Startup guarantee: relay_init() drives the ON level before enabling output,
+// then drives ON again after pinMode so boot does not produce an OFF pulse.
 void relay_init();
 
 // Power the external load ON (normal running state).

@@ -17,6 +17,14 @@ ON/OFF or power-cycle it (`RESET`).
 A hardware **watchdog (2 s)** resets the MCU automatically if the firmware ever
 hangs.
 
+## Startup behavior
+
+- The firmware initializes relay control first and guarantees the load comes up
+  **ON** at boot.
+- `relay_init()` drives the ON level before and after enabling output mode to
+  avoid a transient OFF pulse during startup.
+- This startup behavior is intended to be stable across both Uno and Leonardo.
+
 ## Build
 
 The build runs inside the `arduino-cmake` Docker image via CMake:
@@ -85,6 +93,16 @@ reset done (load ON)
 
 The default RESET duration is stored in the ATmega's internal EEPROM (guarded by
 a magic byte) so it survives power loss and reboots. Change it with `SETDELAY`.
+
+## Host-side unit tests
+
+Parser and timing helpers are testable on the host without AVR hardware.
+
+```sh
+cmake -S tests -B tests/build
+cmake --build tests/build
+ctest --test-dir tests/build --output-on-failure
+```
 
 ## Project layout
 

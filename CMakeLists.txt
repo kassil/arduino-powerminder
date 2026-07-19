@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(ArduinoProject C CXX ASM)
 
+option(PROJECT_WARNINGS_AS_ERRORS "Fail build on warnings for project sources" ON)
+
 # --------------------------------------------------
 # MCU & Board settings
 # --------------------------------------------------
@@ -25,6 +27,7 @@ set(SRC_FILES
     relay.cpp
     config.cpp
     console.cpp
+    console_logic.cpp
 )
 list(TRANSFORM SRC_FILES PREPEND src/)
 
@@ -109,6 +112,10 @@ target_compile_options(${PROJECT_NAME}.elf PRIVATE
     -MMD
     -flto
 )
+
+if(PROJECT_WARNINGS_AS_ERRORS)
+    set_source_files_properties(${SRC_FILES} PROPERTIES COMPILE_OPTIONS "-Werror")
+endif()
 
 target_link_options(${PROJECT_NAME}.elf PRIVATE
     -mmcu=${MCU}

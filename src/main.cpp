@@ -14,6 +14,12 @@
 
 void setup()
 {
+    // Critical startup order:
+    // 1) relay_init() establishes ON with no OFF pulse on boot.
+    // 2) config_init() restores persisted defaults.
+    // 3) console_init() publishes the command interface.
+    // 4) watchdog is armed after services are ready.
+
     // Power the external load on as early as possible.
     relay_init();
 
