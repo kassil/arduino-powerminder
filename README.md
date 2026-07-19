@@ -54,6 +54,13 @@ Uses `avrdude` (`arduino` programmer, 115200 baud). Adjust the serial port in
 Connect any terminal at **115200 8N1**. You'll get a banner and a `>` prompt.
 Commands are **case-insensitive** and line-based; backspace works.
 
+Grammar notes:
+
+- each line contains one command token and at most one argument token
+- extra tokens after the first argument are ignored
+- `RESET` with no argument uses the saved default duration
+- `SETDELAY` requires an argument
+
 | Command            | Action                                                                 |
 | ------------------ | ---------------------------------------------------------------------- |
 | `HELP` (or `?`)    | Show the command list                                                  |
@@ -114,6 +121,17 @@ To keep them target-relevant:
 - keep all hardware-facing behavior validated by the AVR build and hardware
   smoke tests
 
+## Warning policy
+
+Project sources are built with warnings-as-errors by default (`-Werror`).
+Arduino core sources are not promoted to errors.
+
+For emergency local builds without warning gating:
+
+```sh
+./dev.sh build-relaxed
+```
+
 ## Dev wrapper
 
 Use `./dev.sh` for common workflows:
@@ -123,10 +141,28 @@ Use `./dev.sh` for common workflows:
 ./dev.sh clean-test   # remove tests/build/
 ./dev.sh clean-all    # remove both
 ./dev.sh build        # AVR firmware build (Docker)
+./dev.sh build-relaxed # AVR firmware build without project -Werror
 ./dev.sh build-test   # configure+build host tests
 ./dev.sh test         # run host tests
 ./dev.sh check        # build firmware + build tests + run tests
+./dev.sh check-relaxed # relaxed firmware build + build tests + run tests
 ```
+
+## Additional automated tests
+
+Useful white-box tests to add next:
+
+- command argument-policy tests around edge cases (`RESET` defaulting vs
+  `SETDELAY` required argument)
+- dispatch-policy tests ensuring unknown commands never mutate relay/config state
+- line-buffer behavior tests (CR/LF collapse, backspace handling, truncation)
+- timer policy tests around wraparound and boundary tenths rounding
+
+Without a black-box pin harness, keep hardware validation as a checklist.
+For true device-level automation you need an observer for relay pin D7:
+
+- logic analyzer/scope on D7 to assert no OFF pulse at boot
+- or a second MCU sampling D7 and reporting transitions over serial
 
 ## Project layout
 
@@ -141,4 +177,5 @@ tools/
   gen_listing.sh  post-build .lss/.sym generation
 CMakeLists.txt  build definition
 flash.sh        avrdude flashing
+dev.sh          developer wrapper commands
 ```

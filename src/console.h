@@ -6,8 +6,12 @@
  *
  * Contracts:
  * - Commands are case-insensitive and accept at most one argument.
+ * - RESET with no argument uses the saved default duration.
+ * - SETDELAY requires an argument.
  * - ON and OFF cancel any RESET pulse in progress.
  * - RESET is non-blocking; console_tick() completes it once the timer elapses.
+ * - console_init() waits for serial readiness; this matters on Leonardo-class
+ *   native-USB boards and is effectively a no-op on classic Uno.
  */
 #pragma once
 

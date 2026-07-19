@@ -14,15 +14,26 @@ Commands:
   clean-test   Remove host-test build artifacts
   clean-all    Remove both firmware and host-test artifacts
   build        Build AVR firmware (Docker toolchain)
+    build-relaxed Build AVR firmware with project warnings-as-errors disabled
   build-test   Configure and build host-side unit tests
   test         Run host-side unit tests
   check        Build firmware + build tests + run tests
+    check-relaxed Build firmware (relaxed) + build tests + run tests
 EOF
 }
 
+do_build_with_args() {
+    extra_cmake_args="$1"
+        docker run --rm -v "$ROOT_DIR":/home/builder/project \
+                arduino-cmake /bin/bash -lc "cd /home/builder/project && cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=avr-gcc-toolchain.cmake ${extra_cmake_args} && make -C build -j\$(nproc)"
+}
+
 do_build() {
-    docker run --rm -v /home/kevin/programming/atmel_avr/arduino-powerminder:/home/builder/project \
-        arduino-cmake /bin/bash -lc "cd /home/builder/project && cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=avr-gcc-toolchain.cmake && make -C build -j$(nproc)"
+        do_build_with_args ""
+}
+
+do_build_relaxed() {
+        do_build_with_args "-DPROJECT_WARNINGS_AS_ERRORS=OFF"
 }
 
 do_build_test() {
@@ -47,6 +58,9 @@ case "${1:-}" in
     build)
         do_build
         ;;
+    build-relaxed)
+        do_build_relaxed
+        ;;
     build-test)
         do_build_test
         ;;
@@ -55,6 +69,11 @@ case "${1:-}" in
         ;;
     check)
         do_build
+        do_build_test
+        do_test
+        ;;
+    check-relaxed)
+        do_build_relaxed
         do_build_test
         do_test
         ;;
