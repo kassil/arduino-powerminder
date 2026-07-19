@@ -101,7 +101,7 @@ target_compile_definitions(${PROJECT_NAME}.elf PRIVATE
 target_compile_options(${PROJECT_NAME}.elf PRIVATE
     -mmcu=${MCU}
     $<$<COMPILE_LANGUAGE:C>:-std=gnu11>
-    $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++11 -fno-exceptions -fno-threadsafe-statics>
+    $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++11 -fno-exceptions -fno-threadsafe-statics -fno-rtti>
     -Os
     -Wall
     -ffunction-sections
