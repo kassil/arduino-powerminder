@@ -1,14 +1,14 @@
 /*
  * Persistent configuration, stored in the ATmega's internal EEPROM.
  *
- * Currently this holds only the default RESET pulse length so the operator's
+ * We hold the default RESET pulse length, so the operator's
  * preferred power-cycle duration survives reboots.
  */
 #pragma once
 #include <stdint.h>
 
 // Fallback default RESET pulse length (tenths of a second) used when the
-// EEPROM has never been programmed.  50 tenths == 5 seconds.
+// EEPROM has never been programmed.
 constexpr uint16_t CONFIG_DEFAULT_RESET_TENTHS = 50;
 
 // Load persisted configuration from EEPROM.  Call once during startup.

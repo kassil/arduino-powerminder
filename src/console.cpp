@@ -243,7 +243,7 @@ void console_tick()
         }
         s_prev = c;
 
-        if (c == '\r' || c == '\n') {
+        if (c == '\r' || c == '\n') {  // line terminator
             Serial.println();
             s_line[s_len] = '\0';
             if (s_len > 0) {
