@@ -104,6 +104,30 @@ cmake --build tests/build
 ctest --test-dir tests/build --output-on-failure
 ```
 
+These tests run on the host CPU, so they are for behavior locking rather than
+cycle-accurate AVR emulation.
+
+To keep them target-relevant:
+
+- use fixed-width integer types (`uint8_t`, `uint16_t`, `uint32_t`)
+- isolate pure logic from hardware I/O (already done in `console_logic`)
+- keep all hardware-facing behavior validated by the AVR build and hardware
+  smoke tests
+
+## Dev wrapper
+
+Use `./dev.sh` for common workflows:
+
+```sh
+./dev.sh clean        # remove firmware build/
+./dev.sh clean-test   # remove tests/build/
+./dev.sh clean-all    # remove both
+./dev.sh build        # AVR firmware build (Docker)
+./dev.sh build-test   # configure+build host tests
+./dev.sh test         # run host tests
+./dev.sh check        # build firmware + build tests + run tests
+```
+
 ## Project layout
 
 ```
@@ -116,6 +140,5 @@ src/
 tools/
   gen_listing.sh  post-build .lss/.sym generation
 CMakeLists.txt  build definition
-build.sh        containerised build
 flash.sh        avrdude flashing
 ```
