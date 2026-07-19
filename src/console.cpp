@@ -182,21 +182,21 @@ void dispatch(char *line)
     char *arg = strtok(nullptr, " \t");
     str_upper(cmd);
 
-    if (strcmp(cmd, "HELP") == 0 || strcmp(cmd, "?") == 0) {
+    if (strcmp_P(cmd, PSTR("HELP")) == 0 || strcmp_P(cmd, PSTR("?")) == 0) {
         cmd_help();
-    } else if (strcmp(cmd, "ON") == 0) {
+    } else if (strcmp_P(cmd, PSTR("ON")) == 0) {
         cmd_on();
-    } else if (strcmp(cmd, "OFF") == 0) {
+    } else if (strcmp_P(cmd, PSTR("OFF")) == 0) {
         cmd_off();
-    } else if (strcmp(cmd, "RESET") == 0) {
+    } else if (strcmp_P(cmd, PSTR("RESET")) == 0) {
         cmd_reset(arg);
-    } else if (strcmp(cmd, "SETDELAY") == 0) {
+    } else if (strcmp_P(cmd, PSTR("SETDELAY")) == 0) {
         cmd_setdelay(arg);
-    } else if (strcmp(cmd, "STATUS") == 0) {
+    } else if (strcmp_P(cmd, PSTR("STATUS")) == 0) {
         cmd_status();
-    } else if (strcmp(cmd, "VERSION") == 0 || strcmp(cmd, "ID") == 0) {
+    } else if (strcmp_P(cmd, PSTR("VERSION")) == 0 || strcmp_P(cmd, PSTR("ID")) == 0) {
         cmd_version();
-    } else if (strcmp(cmd, "REBOOT") == 0) {
+    } else if (strcmp_P(cmd, PSTR("REBOOT")) == 0) {
         cmd_reboot();
     } else {
         Serial.print(F("? unknown command: "));
