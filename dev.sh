@@ -4,6 +4,8 @@ set -eu
 ROOT_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 BUILD_DIR="$ROOT_DIR/build"
 TEST_BUILD_DIR="$ROOT_DIR/tests/build"
+DOCKER_IMAGE="${DOCKER_IMAGE:-arduino-cmake:latest}"
+DOCKERFILE_PATH="$ROOT_DIR/Dockerfile"
 
 usage() {
     cat <<'EOF'
@@ -13,6 +15,7 @@ Commands:
   clean        Remove firmware build artifacts
   clean-test   Remove host-test build artifacts
   clean-all    Remove both firmware and host-test artifacts
+  image-build  Build Docker toolchain image used for firmware build
   build        Build AVR firmware (Docker toolchain)
   build-relaxed Build AVR firmware with project warnings-as-errors disabled
   build-test   Configure and build host-side unit tests
@@ -22,18 +25,33 @@ Commands:
 EOF
 }
 
+ensure_docker_image() {
+    if docker image inspect "$DOCKER_IMAGE" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    echo "Docker image '$DOCKER_IMAGE' not found locally. Run './dev.sh image-build' first." >&2
+    exit 1
+}
+
+do_image_build() {
+    docker build -t "$DOCKER_IMAGE" -f "$DOCKERFILE_PATH" "$ROOT_DIR"
+}
+
 do_build_with_args() {
     extra_cmake_args="$1"
-        docker run --rm -v "$ROOT_DIR":/home/builder/project \
-                arduino-cmake /bin/bash -lc "cd /home/builder/project && cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=avr-gcc-toolchain.cmake ${extra_cmake_args} && make -C build -j\$(nproc)"
+    ensure_docker_image
+    docker run --rm -v "$ROOT_DIR":/home/builder/project \
+                --user "$(id -u):$(id -g)" \
+        "$DOCKER_IMAGE" /bin/bash -lc "cd /home/builder/project && cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=avr-gcc-toolchain.cmake ${extra_cmake_args} && make -C build -j\$(nproc)"
 }
 
 do_build() {
-        do_build_with_args ""
+    do_build_with_args ""
 }
 
 do_build_relaxed() {
-        do_build_with_args "-DPROJECT_WARNINGS_AS_ERRORS=OFF"
+    do_build_with_args "-DPROJECT_WARNINGS_AS_ERRORS=OFF"
 }
 
 do_build_test() {
@@ -54,6 +72,9 @@ case "${1:-}" in
         ;;
     clean-all)
         rm -rf "$BUILD_DIR" "$TEST_BUILD_DIR"
+        ;;
+    image-build)
+        do_image_build
         ;;
     build)
         do_build

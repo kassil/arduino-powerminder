@@ -27,11 +27,71 @@ hangs.
 
 ## Build
 
-The build runs inside the `arduino-cmake` Docker image via CMake:
+The firmware build runs inside a Docker toolchain image (`arduino-cmake:latest` by default).
+Build that image once before running the firmware build.
 
 ```sh
-./build.sh
+./dev.sh image-build
+./dev.sh build
 ```
+
+You can override the image tag if needed:
+
+```sh
+DOCKER_IMAGE=arduino-cmake:dev ./dev.sh image-build
+DOCKER_IMAGE=arduino-cmake:dev ./dev.sh build
+```
+
+## Docker setup (proxy-aware)
+
+If `docker run`/`docker build` fails with Docker Hub DNS or network errors (for example, `lookup registry-1.docker.io: no such host`), configure Docker daemon proxy settings.
+
+1. Verify Docker daemon is running and your user can access it.
+2. Configure Docker daemon proxy (systemd drop-in):
+
+```sh
+sudo mkdir -p /etc/systemd/system/docker.service.d
+cat <<'EOF' | sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf
+[Service]
+Environment="HTTP_PROXY=http://proxy.company:8080"
+Environment="HTTPS_PROXY=http://proxy.company:8080"
+Environment="NO_PROXY=localhost,127.0.0.1"
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+3. Build the toolchain image:
+
+```sh
+./dev.sh image-build
+```
+
+4. Run firmware build:
+
+```sh
+./dev.sh build
+```
+
+### Offline / mirrored-registry fallback
+
+If this network cannot reach Docker Hub at all, build once on a connected machine and import the image tar here.
+
+On a connected machine:
+
+```sh
+docker build -t arduino-cmake:latest -f Dockerfile .
+docker save -o arduino-cmake-latest.tar arduino-cmake:latest
+```
+
+Transfer the tar file, then on this machine:
+
+```sh
+docker load -i arduino-cmake-latest.tar
+./dev.sh build
+```
+
+If your org provides an internal registry mirror, retag/push the image there and pull from that mirror instead.
 
 This produces `build/ArduinoProject.hex` along with:
 
@@ -140,6 +200,7 @@ Use `./dev.sh` for common workflows:
 ./dev.sh clean        # remove firmware build/
 ./dev.sh clean-test   # remove tests/build/
 ./dev.sh clean-all    # remove both
+./dev.sh image-build  # build docker toolchain image
 ./dev.sh build        # AVR firmware build (Docker)
 ./dev.sh build-relaxed # AVR firmware build without project -Werror
 ./dev.sh build-test   # configure+build host tests
