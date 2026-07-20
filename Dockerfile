@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim
+FROM debian:bullseye-slim
 
 # Install build tools and AVR toolchain
 RUN apt-get update && apt-get install -y \
