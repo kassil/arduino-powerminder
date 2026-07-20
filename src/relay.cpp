@@ -6,11 +6,12 @@ namespace {
 // Cached logical state so relay_is_on() never has to read the pin back.
 bool s_load_on = false;
 
-// Translate a logical load state into a physical pin level, honouring the
-// board polarity, and remember the new state.
+// Translate a logical load state into a physical relay pin level and remember
+// the new state.
 void drive(bool on)
 {
-    const uint8_t relay_level = (on ^ RELAY_ACTIVE_LOW) ? HIGH : LOW;
+    // Map logical load state to relay GPIO with NC/fail-safe policy.
+    const uint8_t relay_level = (on ^ RELAY_OFF_ACTIVE_LOW) ? LOW : HIGH;
     digitalWrite(RELAY_PIN, relay_level);
     const uint8_t led_level = (on ^ BUILTIN_LED_ACTIVE_LOW) ? HIGH : LOW;
     digitalWrite(LED_BUILTIN, led_level); // mirror the load state on the built-in LED

@@ -9,9 +9,10 @@ ON/OFF or power-cycle it (`RESET`).
 
 - **Board:** Arduino Uno / ATmega328P @ 16 MHz
 - **Relay pin:** digital **D7** (`RELAY_PIN` in [`src/relay.h`](src/relay.h))
-- **Relay polarity:** **active-low** module — the pin is driven **LOW to power
-  the load ON**, HIGH to switch it OFF (`RELAY_ACTIVE_LOW = true`). Set that
-  constant to `false` for an active-high board; no other code changes needed.
+- **Relay/load policy (NC fail-safe):** pin is driven **LOW to switch the load
+  OFF** (relay energized, NC contact opened), and **HIGH to power the load ON**
+  (relay released, NC contact closed). This is controlled by
+  `RELAY_OFF_ACTIVE_LOW = true` in [`src/relay.h`](src/relay.h).
 - **Serial:** **115200 baud, 8N1** over USB.
 
 A hardware **watchdog (2 s)** resets the MCU automatically if the firmware ever
