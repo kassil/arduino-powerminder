@@ -14,11 +14,11 @@ Commands:
   clean-test   Remove host-test build artifacts
   clean-all    Remove both firmware and host-test artifacts
   build        Build AVR firmware (Docker toolchain)
-    build-relaxed Build AVR firmware with project warnings-as-errors disabled
+  build-relaxed Build AVR firmware with project warnings-as-errors disabled
   build-test   Configure and build host-side unit tests
   test         Run host-side unit tests
   check        Build firmware + build tests + run tests
-    check-relaxed Build firmware (relaxed) + build tests + run tests
+  check-relaxed Build firmware (relaxed) + build tests + run tests
 EOF
 }
 
